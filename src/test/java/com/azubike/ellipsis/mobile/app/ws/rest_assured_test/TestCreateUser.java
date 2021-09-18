@@ -2,12 +2,17 @@ package com.azubike.ellipsis.mobile.app.ws.rest_assured_test;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,13 +33,22 @@ class TestCreateUser {
 
 		List<Map<String, Object>> userAddresses = new ArrayList<>();
 
-		Map<String, Object> shippingAddresses = new HashMap<>();
-		shippingAddresses.put("city", "Vancover");
-		shippingAddresses.put("country", "Canada");
-		shippingAddresses.put("streetName", "Dancing ave");
-		shippingAddresses.put("postalCode", "12345");
-		shippingAddresses.put("type", "shipping");
-		userAddresses.add(shippingAddresses);
+		Map<String, Object> shippingAddress = new HashMap<>();
+		shippingAddress.put("city", "Vancover");
+		shippingAddress.put("country", "Canada");
+		shippingAddress.put("streetName", "Dancing ave");
+		shippingAddress.put("postalCode", "12345");
+		shippingAddress.put("type", "shipping");
+		userAddresses.add(shippingAddress);
+
+		Map<String, Object> billingAddress = new HashMap<>();
+		billingAddress.put("city", "Vancover");
+		billingAddress.put("country", "Canada");
+		billingAddress.put("streetName", "Dancing ave");
+		billingAddress.put("postalCode", "12345");
+		billingAddress.put("type", "billing");
+
+		userAddresses.add(billingAddress);
 
 		Map<String, Object> userDetails = new HashMap<>();
 		userDetails.put("firstName", "Azubike");
@@ -50,6 +64,20 @@ class TestCreateUser {
 		assertNotNull(response);
 		String userId = response.jsonPath().getString("userId");
 		assertNotNull(userId);
+
+		String bodyString = response.body().asString();
+		try {
+			JSONObject responseBodyJson = new JSONObject(bodyString);
+			JSONArray addresses = responseBodyJson.getJSONArray("addresses");
+			assertNotNull(addresses);
+			assertTrue(addresses.length() == 2);
+			String addressId = addresses.getJSONObject(0).getString("addressId");
+			assertNotNull(addressId);
+			assertTrue(addressId.length() == 30);
+		} catch (JSONException ex) {
+			fail(ex.getMessage());
+		}
+
 	}
 
 }
