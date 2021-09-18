@@ -93,7 +93,6 @@ class UserWebServiceEndpointTest {
 	}
 
 	@Test
-	@Ignore
 	@Order(4)
 	void testDeleteUserDetails() {
 		Response response = given().header("Authorization", authHeader).accept(JSON).pathParam("id", userId).when()
