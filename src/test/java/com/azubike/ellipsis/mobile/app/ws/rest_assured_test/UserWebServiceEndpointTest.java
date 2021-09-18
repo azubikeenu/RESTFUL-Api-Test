@@ -24,6 +24,7 @@ class UserWebServiceEndpointTest {
 	private final String JSON = "application/json";
 	private static String authHeader;
 	private static String userId;
+	private static List<Map<String, String>> addresses;
 
 	void setUp() throws Exception {
 		RestAssured.baseURI = "http://localhost";
@@ -57,7 +58,7 @@ class UserWebServiceEndpointTest {
 		String email = response.jsonPath().getString("email");
 		String firstName = response.jsonPath().getString("firstName");
 		String lastName = response.jsonPath().getString("lastName");
-		List<Map<String, String>> addresses = response.jsonPath().getList("addresses");
+		addresses = response.jsonPath().getList("addresses");
 		String addressId = addresses.get(0).get("addressId");
 		assertNotNull(userPublicId);
 		assertNotNull(email);
@@ -67,5 +68,41 @@ class UserWebServiceEndpointTest {
 		assertTrue(addresses.size() == 2);
 		assertTrue(addressId.length() == 30);
 
+	}
+
+	@Test
+	@Order(3)
+	void testUpdateUserDetails() {
+		Map<String, Object> userDetails = new HashMap<>();
+		userDetails.put("firstName", "Patrick");
+		userDetails.put("lastName", "Johnson");
+		Response response = given().contentType(JSON).accept(JSON).header("Authorization", authHeader)
+				.pathParam("id", userId).body(userDetails).when().put(CONTEXT_PATH + "/users/{id}").then()
+				.statusCode(200).contentType(JSON).extract().response();
+
+		String firstName = response.jsonPath().getString("firstName");
+		String lastName = response.jsonPath().getString("lastName");
+		List<Map<String, String>> returnedAddresses = response.jsonPath().getList("addresses");
+
+		assertEquals(userDetails.get("firstName"), firstName);
+		assertEquals(userDetails.get("lastName"), lastName);
+		assertNotNull(returnedAddresses);
+		assertTrue(addresses.size() == returnedAddresses.size());
+		assertEquals(addresses.get(0).get("streetName"), returnedAddresses.get(0).get("streetName"));
+
+	}
+
+	@Test
+	@Ignore
+	@Order(4)
+	void testDeleteUserDetails() {
+		Response response = given().header("Authorization", authHeader).accept(JSON).pathParam("id", userId).when()
+				.delete(CONTEXT_PATH + "/users/{id}").then().statusCode(200).contentType(JSON).extract().response();
+
+		String operationResult = response.jsonPath().getString("operationResult");
+		String operationName = response.jsonPath().getString("operationName");
+		assertNotNull(response);
+		assertEquals("SUCCESS", operationResult);
+		assertEquals("DELETE", operationName);
 	}
 }
